@@ -1,0 +1,433 @@
+1. A theme a collection of minimum two files located inside a folder under the folder wp-content/themes/. The first file should be named as style.css and the second file should be named as index.php.
+
+2. The file style.css contains the name and other details of the theme in the form css comment as follows:
+
+/*
+ * Theme Name	: 	Cool Blue
+ * Theme URI	:	http://www.glug4muz.org/themes/cool-blue
+ * Author		:	Pankaj Kumar
+ * Author URI	:	http://www.glug4muz.org/ccpplinux
+ * Version		:	1.0
+ * Description	:	Theme based on cool blue HTML template
+ */
+
+3. The file index.php contains template of the theme written in HTML/JS/CSS/PHP mixed code.
+
+4. The header of the template can be placed in the file header.php and then it can be included in the main theme (index.php) using the get_header() function as follows:
+
+<?php get_header(); ?>
+
+5. When get_header function is being called without argument then it includes the file header.php. When get_header function is being called with an argument such as get_header('page') then it will include the file header-page.php.
+
+6. The footer of the template can be placed in the file footer.php and then it can be included in the main theme (index.php) using the get_footer() function as follows:
+
+<?php get_footer(); ?>
+
+7. When get_footer function is being called without argument then it includes the file footer.php. When get_footer function is being called with an argument such as get_footer('page') then it will include the file footer-page.php.
+
+8. In order to properly include the css file of the theme, we can adjust the code of header.php file in two ways:
+	
+	8.a. We can adjust the value of href attribute of link tag as follows:
+	
+	<link rel='stylesheet' href='wp-content/themes/my-theme/css/my-theme.css'>
+	
+	8.b. We can make use of wordpress predefined functions for this purpose as follows:
+	
+		8.b.i. Call the function wp_head() in the header.php file inside the head tag as follows:
+		
+		<?php wp_head(); ?>
+		
+		8.b.ii. Create a file with name functions.php in the theme folder and then put the following content in that file:
+		
+		<?php
+			function cpl_add_custom_scripts_styles()
+			{
+				wp_register_style
+				(
+					'cool-blue-style', //Handle
+					get_template_directory_uri().'/css/coolblue.css', //Source
+					array(), //Dependencies
+					false, //Version
+					'screen' //Media
+				);
+				wp_enqueue_style('cool-blue-style');
+			}
+			add_action('wp_enqueue_scripts', 'cpl_add_custom_scripts_styles');
+		?>
+
+		The meaning of the parameters used above are defined below:
+		
+		Handle – Unique name of the style to reference it.
+		
+		Source – Location of this style sheet.  
+		
+		Dependencies – An array containig handle names of style sheets that should be loaded first before this style sheet.
+		
+		Version – The version of this script.
+		
+		Media – The media type for this style sheet. Media, all, screen, etc. 
+
+9. Open the file footer.php and before </body> tag insert the following code:
+
+<?php wp_footer(); ?>
+
+10. Then open the script functions.php and insert the following code in the last of body of the function:
+
+wp_enqueue_script('jquery');
+
+As jquery script has already been registered with WordPress and so there is no need to register it. So we have simply used it using wp_enqueue_script function.
+
+11. As our HTML template is also containig another JS script with name scrollToTop.js inside the js folder and so use it in our theme we will have to first of register it and then use it. It can be registered as follows inside the function cpl_add_custom_scripts_styles in the file functions.php:
+
+wp_register_script
+(
+	'scroll-script', //Handle
+	get_template_directory_uri().'/js/scrollToTop.js', //Source 
+	array('jquery'), //Dependencies
+	false, //Version
+	true //Load in footer
+);
+
+Then it can be used as follows:
+
+wp_enqueue_script('scroll-script');
+
+Now we can comment the following code in header.php:
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js"></script>
+<script>window.jQuery || document.write('<script src="js/jquery-1.6.1.min.js"><\/script>')</script>
+<script src="js/scrollToTop.js"></script>
+
+And still the theme will work well.
+
+12. In order to provide menu support in our theme we have to use the following code in the file functions.php:
+
+function cool_blue_menu() 
+{
+	   register_nav_menus( array( 'main' => 'Main Nav' ) );
+}
+
+add_action('init', 'cool_blue_menu');
+
+13. Then in the header.php after commenting HTML <nav> ... </nav> tag we can implement menu using following function:
+
+<?php
+wp_nav_menu( array('theme_location' => 'main', 'menu' => 'main', 'container' => 'nav' ));
+?>
+
+This menu can also be customized from the dashboard using Appearances->Menu.
+
+14. Similar to menu, we can provide support of sidebar in our theme. Inside the file functions.php we need to use the following code:
+
+function cool_blue_sidebar() 
+{
+	   register_sidebar
+	   ( 
+			array 
+			(
+				'name'=> __( 'Primary Sidebar', 'primary-sidebar' ),
+				'id'=> 'primary-widget-area',
+				'description' => __( 'The primary widget area', 'dir' ),
+				'before_widget' => '<div class="sidemenu">',
+				'after_widget'=> "</div>",
+				'before_title'=> '<h3>',
+				'after_title' => '</h3>' 
+			)
+		);
+
+}
+
+add_action('init', 'cool_blue_sidebar');
+
+Then in the file index.php, replace the HTML tag corresponding to sidebar with the following PHP code:
+
+<?php get_sidebar(); ?>
+
+Then create a file sidebar.php and write the following code in that file:
+
+<!-- sidebar -->
+ <div id="sidebar">
+ <?php if ( !function_exists( 'dynamic_sidebar' ) || !dynamic_sidebar('Primary
+ Sidebar') )?>
+ <!-- /sidebar -->
+</div>
+
+Finally in the admin dashboard, go to Appearance > Widgets and try dragging some widgets. These widgets should be displayed in the main site sidebar.
+
+15. Now open the file index.php and then insert the following code between <!-- main --> ... <!-- /main --> section:
+
+<?php
+	if(have_posts())
+	{
+		while(have_posts())
+		{
+			the_post();
+			?>
+			<article class="post">
+				<div class="primary">
+					<h2>
+						<a href="<?php the_permalink(); ?>">
+						<?php the_title();?>
+						</a>
+					</h2>
+					<p class="post-info">
+						<span>filed under</span> <?php the_category( ',' ); ?>
+					</p>
+					<div class="image-section">
+						<?php the_post_thumbnail(); ?>
+					</div>
+					<?php the_content(); ?>
+				</div>
+				<aside>
+					<p>
+						<?php the_time('M'); ?>
+						<span><?php the_time('d'); ?></span>
+					</p>
+					<div class="post-meta">
+						<h4>Post Info</h4>
+						<ul>
+							<li class="user"><a href="#"><?php the_author(); ?></a></li>
+							<li class="time"><a href="#"><?php the_time(); ?></a></li>
+							<li class="comment"><a href="#"><?php comments_number();?></a></li>
+							<li class="permalink">
+								<a href="<?php the_permalink();?>">Permalink</a>
+							</li>
+						</ul>
+					</div>
+				</aside>
+			</article>
+			<?php
+		}
+	}
+	else
+	{
+		echo 'No posts were found!';
+	}
+?>
+
+The function have_posts checks the current page and see if it has any posts. If we were viewing a single post and not the index page, then this function would return 1 post instead of all posts.
+
+Here is the description of other functions used in above loop:
+
+the_permalink() – Displays link to the blog post or page
+
+the_title() – Displays the title of the blog post
+
+the_category() – Displays the category/categories this blog post belongs to. If multiple categories, we can pass a string that’ll separate each category.
+
+the_post_thumbnail() – Displays the featured image in <img> tags.
+
+the_content() – Displays the content of the blog post
+
+the_author() – Displays the author of the blog post
+
+the_time() – Displays the date the blog post was published. We can format this by passing a format string.
+
+comments_number() – Displays the number of comments associated with the blog post.
+
+16. The file index.php is default template to be used by the wordpress. Name of other possible templates to be used by wordpress are single.php, page.php, 404.php and custom-template.php. When a single post has to be displayed then wordpress first of all searches for single.php file. If not found then index.php is used. Similarly when a page(not post) has to be displayed then wordpress first of all searches for page.php. If not found then index.php is used. Similarly while displaying a non-existent page, wordpress first of all searches for 404.php. So we can customize the behaviour of wordpress by defining single.php, page.php, 404.php and custom-page.php.
+
+For example at this moment the same code is used to display the main page, single post page as well as single page content. Now save the file index.php as single.php and adjust the code written inside the section <aside> ... </aside> as follows:
+
+<aside>
+	<p>
+		<?php the_time('M'); ?>
+		<span><?php the_time('d'); ?></span>
+	</p>
+	<div class="post-meta">
+		<h4>Post Info</h4>
+		<ul>
+			<li class="user"><a href="#"><?php the_author(); ?></a></li>
+			<li class="time"><a href="#"><?php the_time(); ?></a></li>
+			<li class="comment"><a href="#"><?php comments_number();?></a></li>
+			<li class="permalink">
+				<a href="<?php the_permalink();?>">Permalink</a>
+			</li>
+		</ul>
+	</div>
+
+	<div class="post-meta">
+		<h4>Tags</h4>
+		<?php the_tags('<ul class="tags"><li>','</li><li>','</li></ul>'); ?>
+	</div>
+
+</aside>
+
+Now visit a single post page and then the Tags will appear in the left side of the post.
+
+Similarly save the file index.php as page.php and then adjust the code of loop as follows:
+
+<?php
+	if(have_posts())
+	{
+		while(have_posts())
+		{
+			the_post();
+			?>
+			<article class="post">
+				<div class="primary">
+					<h2>
+						<a href="<?php the_permalink(); ?>">
+						<?php the_title();?>
+						</a>
+					</h2>
+					<?php the_content(); ?>
+				</div>
+			</article>
+			<?php
+		}
+	}
+	else
+	{
+		echo 'No page was found!';
+	}
+?>
+
+Finally save the file index.php as 404.php as then replace loop with following content:
+
+<!-- main -->
+<div id="main">
+
+	The page you are searching is not available.
+
+<!-- /main -->
+</div>
+
+So whenever a non-existent page will be loaded then above message will appear.
+
+17. Custom Page Template: Just like index.php, page.php, single.php and 404.php are predefined page templates, we can also define our own template known as custom page template. Such template can be used with custom pages. For example suppose in a particular page we want to remove sidebar. So for that page we can define a page template in which there will not be a sidebar. Similarly if we want to use a custom form to take input from the user and then process it on a page then we can define a page template containig that form tag as well as code to process data submitted through that form. Even the concept of page template can be used to manage the content of custom post type also.
+
+In order to illustrate the example of full width page template, just save as the file index.php with name full-width-page.php and then set the header of the page as follows:
+
+<?php
+/*
+Template Name: Full Width Page
+*/
+get_header(); 
+?> 
+
+So the name of this template becomes "Full Width Page". Then write the loop of the page as follows:
+
+<?php
+if( have_posts() )
+{
+	while( have_posts() )
+	{
+		the_post();
+?>
+		<h2>
+		<?php the_title();?>
+		</h2>
+		<?php the_content(); ?>
+<?php
+	}
+}
+else
+{
+	echo 'No posts were found!';
+}
+?>
+
+Then go to the admin dashboard and then create a new page. After setting its title and content, select "Full Width Page" from the template drop down box. Then publish the page. If necessary then we can add this page to the menu by clicking on Appearances->Menu.
+
+Similarly we can define a page template for a page containig form as follows:
+
+<?php
+/*
+Template Name: Sum Form
+*/
+foreach($_REQUEST as $var=>$val) $$var=trim(stripslashes($val));
+get_header(); 
+?>
+<!-- content-wrap -->
+<div id="content-wrap">
+<!-- content -->
+<div id="content" class="clearfix">
+   	    <!-- main -->
+        <div id="main">	
+<?php
+if($caller=="self")
+{
+	$errors=array();
+	if(empty($n1)) $errors[n1]="Empty";
+	if(empty($n2)) $errors[n2]="Empty";
+	if(empty($errors)) $sum=$n1+$n2;
+}
+?>
+<form action="<?php echo get_permalink($post->ID); ?>" method=post>
+	<fieldset>
+	<legend>Sum Form</legend>
+	<input type=text name=n1 value="<?php echo $n1; ?>" placeholder="Enter first number">
+	<font color=red><?php echo $errors[n1]; ?></font>
+	<br>
+	<input type=text name=n2 value="<?php echo $n2; ?>" placeholder="Enter second number">
+	<font color=red><?php echo $errors[n2]; ?></font>
+	<br>
+	<input type=submit value=Add>
+	<input type=hidden name=caller value=self>
+	</fieldset>
+</form>
+<?php
+if($caller=="self" and empty($errors)) echo "Sum is $sum";
+?>	
+        <!-- /main -->
+        </div>	
+<!-- content -->
+<!-- /content-out -->
+</div>
+</div>
+<?php get_footer(); ?>
+
+And here is example of custom page template for custom post type:
+
+<?php
+/*
+ * Template Name: Recipes
+ */
+get_header(); 
+?>
+<!-- content-wrap -->
+<div id="content-wrap">
+<!-- content -->
+<div id="content" class="clearfix">
+   	    <!-- main -->
+        <div id="main">	
+
+
+<?php
+	$loop = new WP_Query(array('post_type'=>'recipes'));
+	if($loop->have_posts())
+	{
+		while($loop->have_posts())
+		{
+			$loop->the_post();
+			?>
+			<article class="post">
+				<div class="primary">
+					<h2>
+						<a href="<?php the_permalink(); ?>">
+						<?php the_title();?>
+						</a>
+					</h2>
+					<?php the_content(); ?>
+				</div>
+			</article>
+			<?php
+		}
+	}
+	else
+	{
+		echo 'No page was found!';
+	}
+?>
+
+        <!-- /main -->
+        </div>	
+<!-- content -->
+<!-- /content-out -->
+</div>
+</div>
+<?php get_footer(); ?>
+
+
+
